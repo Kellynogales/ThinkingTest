@@ -18,7 +18,7 @@ public class ThinkingTest {
     }
     /*POST Add User*/
     @Test
-    public void createUserSuccessfullyTest(){
+    public void addUserSuccessfullyTest(){
         given()
                 .contentType(ContentType.JSON)
                 .body("{\n" +
@@ -139,5 +139,168 @@ public class ThinkingTest {
                 .extract().jsonPath().getString("error");
 
         assertThat(errorMessage, equalTo("Please authenticate."));
+    }
+
+    /*POST Add Contact*/
+    @Test
+    public void addContactSuccessfullyTest(){
+        /*Login User*/
+        String userToken = given()
+                .header("Content-Type", "application/json")
+                .body("{\n" +
+                        "    \"email\": \"luis20@gmail.com\",\n" +
+                        "    \"password\": \"myPassword\"\n" +
+                        "}")
+                .post("https://thinking-tester-contact-list.herokuapp.com/users/login")
+                .then()
+                .statusCode(HttpStatus.SC_OK)
+                .body("token", notNullValue())
+                .extract().jsonPath().getString("token");
+
+        given()
+                .auth()
+                .oauth2(userToken)
+                .contentType(ContentType.JSON)
+                .body("{\n" +
+                        "    \"firstName\": \"Jhohny\",\n" +
+                        "    \"lastName\": \"Catch\",\n" +
+                        "    \"birthdate\": \"1970-01-01\",\n" +
+                        "    \"email\": \"jdoe@mortalKombat.com\",\n" +
+                        "    \"phone\": \"8005555555\",\n" +
+                        "    \"street1\": \"1 Main St.\",\n" +
+                        "    \"street2\": \"Apartment A\",\n" +
+                        "    \"city\": \"Anytown\",\n" +
+                        "    \"stateProvince\": \"KS\",\n" +
+                        "    \"postalCode\": \"12345\",\n" +
+                        "    \"country\": \"USA\"\n" +
+                        "}")
+                .log().all()
+                .post("https://thinking-tester-contact-list.herokuapp.com/contacts")
+                .then()
+                .log().all()
+                .statusCode(HttpStatus.SC_CREATED);
+
+    }
+
+    @Test
+    public void verifyResponseOfAddContactWhenSendMandatoryFieldsEmptyTest(){
+        /*Login User*/
+        String userToken = given()
+                .header("Content-Type", "application/json")
+                .body("{\n" +
+                        "    \"email\": \"luis20@gmail.com\",\n" +
+                        "    \"password\": \"myPassword\"\n" +
+                        "}")
+                .post("https://thinking-tester-contact-list.herokuapp.com/users/login")
+                .then()
+                .statusCode(HttpStatus.SC_OK)
+                .body("token", notNullValue())
+                .extract().jsonPath().getString("token");
+
+        given()
+                .auth()
+                .oauth2(userToken)
+                .contentType(ContentType.JSON)
+                .body("{\n" +
+                        "    \"firstName\": \"\",\n" +
+                        "    \"lastName\": \"\",\n" +
+                        "    \"birthdate\": \"1970-01-01\",\n" +
+                        "    \"email\": \"jdoe@mortalKombat.com\",\n" +
+                        "    \"phone\": \"8005555555\",\n" +
+                        "    \"street1\": \"1 Main St.\",\n" +
+                        "    \"street2\": \"Apartment A\",\n" +
+                        "    \"city\": \"Anytown\",\n" +
+                        "    \"stateProvince\": \"KS\",\n" +
+                        "    \"postalCode\": \"12345\",\n" +
+                        "    \"country\": \"USA\"\n" +
+                        "}")
+                .log().all()
+                .post("https://thinking-tester-contact-list.herokuapp.com/contacts")
+                .then()
+                .log().all()
+                .statusCode(HttpStatus.SC_BAD_REQUEST);
+
+    }
+
+    @Test
+    public void verifyResponseWhenUseInvalidTokenTest(){
+        /*Login User*/
+        String userToken = given()
+                .header("Content-Type", "application/json")
+                .body("{\n" +
+                        "    \"email\": \"luis20@gmail.com\",\n" +
+                        "    \"password\": \"myPassword\"\n" +
+                        "}")
+                .post("https://thinking-tester-contact-list.herokuapp.com/users/login")
+                .then()
+                .statusCode(HttpStatus.SC_OK)
+                .body("token", notNullValue())
+                .extract().jsonPath().getString("token");
+
+        given()
+                .auth()
+                .oauth2(userToken+"a")
+                .contentType(ContentType.JSON)
+                .body("{\n" +
+                        "    \"firstName\": \"Java\",\n" +
+                        "    \"lastName\": \"Du\",\n" +
+                        "    \"birthdate\": \"1970-01-01\",\n" +
+                        "    \"email\": \"jdoe@mortalKombat.com\",\n" +
+                        "    \"phone\": \"8005555555\",\n" +
+                        "    \"street1\": \"1 Main St.\",\n" +
+                        "    \"street2\": \"Apartment A\",\n" +
+                        "    \"city\": \"Anytown\",\n" +
+                        "    \"stateProvince\": \"KS\",\n" +
+                        "    \"postalCode\": \"12345\",\n" +
+                        "    \"country\": \"USA\"\n" +
+                        "}")
+                .log().all()
+                .post("https://thinking-tester-contact-list.herokuapp.com/contacts")
+                .then()
+                .log().all()
+                .statusCode(HttpStatus.SC_UNAUTHORIZED);
+    }
+
+    @Test
+    public void getResponseWhenAddContactSuccessfullyTest(){
+        /*Login User*/
+        String userToken = given()
+                .header("Content-Type", "application/json")
+                .body("{\n" +
+                        "    \"email\": \"luis20@gmail.com\",\n" +
+                        "    \"password\": \"myPassword\"\n" +
+                        "}")
+                .post("https://thinking-tester-contact-list.herokuapp.com/users/login")
+                .then()
+                .statusCode(HttpStatus.SC_OK)
+                .body("token", notNullValue())
+                .extract().jsonPath().getString("token");
+
+        String contactBirthdate = given()
+                .auth()
+                .oauth2(userToken)
+                .contentType(ContentType.JSON)
+                .body("{\n" +
+                        "    \"firstName\": \"Java\",\n" +
+                        "    \"lastName\": \"Du\",\n" +
+                        "    \"birthdate\": \"1970-01-01\",\n" +
+                        "    \"email\": \"jdoe@mortalKombat.com\",\n" +
+                        "    \"phone\": \"8005555555\",\n" +
+                        "    \"street1\": \"1 Main St.\",\n" +
+                        "    \"street2\": \"Apartment A\",\n" +
+                        "    \"city\": \"Anytown\",\n" +
+                        "    \"stateProvince\": \"KS\",\n" +
+                        "    \"postalCode\": \"12345\",\n" +
+                        "    \"country\": \"USA\"\n" +
+                        "}")
+                .log().all()
+                .post("https://thinking-tester-contact-list.herokuapp.com/contacts")
+                .then()
+                .log().all()
+                .statusCode(HttpStatus.SC_CREATED)
+                .body("_id", notNullValue())
+                .extract().jsonPath().getString("birthdate");
+
+        assertThat(contactBirthdate, equalTo("1970-01-01"));
     }
 }
