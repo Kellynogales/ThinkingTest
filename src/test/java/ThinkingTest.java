@@ -72,5 +72,72 @@ public class ThinkingTest {
 
         assertThat(userFirstName, equalTo("Luis21"));
     }
-    /**/
+    /*POST Log User*/
+    @Test
+    public void verifyStatusCodeWhenUseValidTokenTest(){
+
+        /*Login User*/
+        String userToken = given()
+                .header("Content-Type", "application/json")
+                .body("{\n" +
+                        "    \"email\": \"luis20@gmail.com\",\n" +
+                        "    \"password\": \"myPassword\"\n" +
+                        "}")
+                .post("https://thinking-tester-contact-list.herokuapp.com/users/login")
+                .then()
+                .statusCode(HttpStatus.SC_OK)
+                .body("token", notNullValue())
+                .extract().jsonPath().getString("token");
+
+        given()
+                .auth()
+                .oauth2(userToken)
+                .log().all()
+                .post("https://thinking-tester-contact-list.herokuapp.com/users/logout")
+                .then()
+                .log().all()
+                .statusCode(HttpStatus.SC_OK);
+    }
+
+    @Test
+    public void verifyStatusCodeWhenUseInvalidTokenTest(){
+
+        /*Login User*/
+        String userToken = given()
+                .header("Content-Type", "application/json")
+                .body("{\n" +
+                        "    \"email\": \"luis20@gmail.com\",\n" +
+                        "    \"password\": \"myPassword\"\n" +
+                        "}")
+                .post("https://thinking-tester-contact-list.herokuapp.com/users/login")
+                .then()
+                .statusCode(HttpStatus.SC_OK)
+                .body("token", notNullValue())
+                .extract().jsonPath().getString("token");
+
+        given()
+                .auth()
+                .oauth2(userToken+"a")
+                .log().all()
+                .post("https://thinking-tester-contact-list.herokuapp.com/users/logout")
+                .then()
+                .log().all()
+                .statusCode(HttpStatus.SC_UNAUTHORIZED);
+    }
+
+    @Test
+    public void verifyIfReceiveErrorMessageWhenUseTokenEmptyTest(){
+        String errorMessage = given()
+                .auth()
+                .oauth2("")
+                .log().all()
+                .post("https://thinking-tester-contact-list.herokuapp.com/users/logout")
+                .then()
+                .log().all()
+                .statusCode(HttpStatus.SC_UNAUTHORIZED)
+                .body("error", notNullValue())
+                .extract().jsonPath().getString("error");
+
+        assertThat(errorMessage, equalTo("Please authenticate."));
+    }
 }
