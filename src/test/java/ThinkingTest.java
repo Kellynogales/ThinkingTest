@@ -1,7 +1,8 @@
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import model.contact.PostContactRequest;
-import model.user.PostUserRequest;
+import model.user.PostAddUserRequest;
+import model.user.PostLoginUserRequest;
 import org.apache.http.HttpStatus;
 import org.junit.Test;
 
@@ -11,11 +12,12 @@ import static io.restassured.path.json.JsonPath.from;
 import static org.hamcrest.Matchers.*;
 
 public class ThinkingTest extends BaseApi {
+    private String userToken = getUserToken();
     /*POST Add User*/
     @Test
     public void addUserSuccessfullyTest(){
 
-        PostUserRequest userRequest = new PostUserRequest("Luis33", "Villa33", "luis33@gmail.com", "myPassword");
+        PostAddUserRequest userRequest = new PostAddUserRequest("Carla Test4", "Apellido Test4", "carlatest4@gmail.com", "myPassword");
 
         Response responseUser = genericMethodPostAddUser(userRequest, "users");
 
@@ -24,14 +26,14 @@ public class ThinkingTest extends BaseApi {
 
         assertThat(statusCode, equalTo(HttpStatus.SC_CREATED));
 
-        String tokenUser = from(body).get("token");
-        assertThat(tokenUser, notNullValue());
+        String token = from(body).get("token");
+        assertThat(token, notNullValue());
     }
 
     @Test
     public void responseCodeBadRequestInAddUserWhenSendMandatoryFieldsEmptyTest(){
 
-        PostUserRequest userRequest = new PostUserRequest("", "", "", "");
+        PostAddUserRequest userRequest = new PostAddUserRequest("", "", "", "");
 
         Response responseUser = genericMethodPostAddUser(userRequest, "users");
 
@@ -48,7 +50,7 @@ public class ThinkingTest extends BaseApi {
     @Test
     public void getFirsNameWhenAddUserSuccessfullyTest(){
 
-        PostUserRequest userRequest = new PostUserRequest("Luis34", "Villa34", "luis34@gmail.com", "myPassword");
+        PostAddUserRequest userRequest = new PostAddUserRequest("Luis34", "Villa34", "luis34@gmail.com", "myPassword");
 
         Response responseUser = genericMethodPostAddUser(userRequest, "users");
 
@@ -57,15 +59,95 @@ public class ThinkingTest extends BaseApi {
 
         assertThat(statusCode, equalTo(HttpStatus.SC_CREATED));
 
-        String token = from(body).get("token");
         String userId = from(body).get("user._id");
         String userFirstName = from(body).get("user.firstName");
 
-        assertThat(token, notNullValue());
         assertThat(userId, notNullValue());
         assertThat(userFirstName, equalTo("Luis34"));
     }
-    /*POST Log User*/
+
+    /*Post Login User*/
+    @Test
+    public void LoginUserWithValidCredentialsTest(){
+        PostLoginUserRequest loginUserRequest = new PostLoginUserRequest("carla@gmail.com", "Password");
+
+        Response responseLoginUser = genericPostLoginUserRequest(loginUserRequest, "users/login");
+
+        int statusCode = responseLoginUser.getStatusCode();
+        String body = responseLoginUser.getBody().asString();
+        String token = from(body).get("token");
+
+        assertThat(statusCode, equalTo(HttpStatus.SC_OK));
+        assertThat(token, notNullValue());
+    }
+
+    @Test
+    public void loginUserWithInvalidCredentialsTest(){
+        PostLoginUserRequest loginUserRequest = new PostLoginUserRequest("carla1@gmail.com", "Password1");
+
+        Response responseLoginUser = genericPostLoginUserRequest(loginUserRequest, "users/login");
+
+        int statusCode = responseLoginUser.getStatusCode();
+        assertThat(statusCode, equalTo(HttpStatus.SC_UNAUTHORIZED));
+    }
+
+    @Test
+    public void verifyIfMatchUserWithValidCredentialsTest(){
+        PostLoginUserRequest loginUserRequest = new PostLoginUserRequest("carla@gmail.com", "Password");
+
+        Response responseLoginUser = genericPostLoginUserRequest(loginUserRequest, "users/login");
+
+        int statusCode = responseLoginUser.getStatusCode();
+        String body = responseLoginUser.getBody().asString();
+        String userEmail = from(body).getString("user.email");
+
+        assertThat(statusCode, equalTo(HttpStatus.SC_OK));
+        assertThat(userEmail, equalTo("carla@gmail.com"));
+    }
+    /*Get User*/
+    @Test
+    public void verifyStatusCode200WithValidCredentialsTest(){
+        Response response = genericGetUserRequest(userToken, "users/me");
+        int statusCode = response.getStatusCode();
+        String body = response.getBody().asString();
+        String userEmail = from(body).getString("email");
+
+        assertThat(statusCode, equalTo(HttpStatus.SC_OK));
+        assertThat(userEmail, equalTo("carla@gmail.com"));
+    }
+    @Test
+    public void verifyStatusCode401WithInvalidCredentialsTest(){
+        Response response = genericGetUserRequest(userToken+"0", "users/me");
+        int statusCode = response.getStatusCode();
+
+        assertThat(statusCode, equalTo(HttpStatus.SC_UNAUTHORIZED));
+    }
+
+    @Test
+    public void verifyReceivesAMessageWhenSendWithoutTokenTest(){
+        Response response = genericGetUserRequest("", "users/me");
+        int statusCode = response.getStatusCode();
+        String body = response.getBody().asString();
+        String errorMessage = from(body).getString("error");
+
+        assertThat(statusCode, equalTo(HttpStatus.SC_UNAUTHORIZED));
+        assertThat(errorMessage, equalTo("Please authenticate."));
+    }
+
+    /*PATH user*/
+    @Test
+    public void UpdateUserFirstName(){
+        PostAddUserRequest userRequest = new PostAddUserRequest("Carlos", "Lopez", "carla@gmail.com", "Password");
+
+        Response response = genericPathUserRequest(userToken, userRequest, "/users/me");
+
+        String body = response.getBody().asString();
+        String updateFirstName = from(body).get("firstName");
+
+        assertThat(updateFirstName, equalTo("Carlos"));
+
+    }
+    /*POST Log out User*/
     @Test
     public void verifyStatusCodeWhenUseValidTokenTest(){
 
@@ -226,14 +308,41 @@ public class ThinkingTest extends BaseApi {
 
     /*Refactor Method*/
     //AddUser
-    private Response genericMethodPostAddUser(PostUserRequest userRequest, String path) {
+    private Response genericMethodPostAddUser(PostAddUserRequest userRequest, String path) {
         Response response = given()
                 .contentType(ContentType.JSON)
                 .body(userRequest)
                 .post(path);
         return response;
     }
+    //LoginUser
+    private Response genericPostLoginUserRequest(PostLoginUserRequest loginUserRequest, String path){
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .body(loginUserRequest)
+                .post(path);
 
+        return response;
+    }
+    //GetUser
+    private Response genericGetUserRequest(String token, String path){
+        Response response = given()
+                .auth()
+                .oauth2(token)
+                .when()
+                .get(path);
+        return response;
+    }
+    //PathUser
+    private Response genericPathUserRequest(String token,PostAddUserRequest userRequest, String path){
+        Response response = given()
+                .auth()
+                .oauth2(token)
+                .contentType(ContentType.JSON)
+                .body(userRequest)
+                .patch(path);
+        return response;
+    }
     //Log out User
     private Response genericMethodPostLogOutUser(String token, String path) {
         Response response = given()
@@ -256,5 +365,17 @@ public class ThinkingTest extends BaseApi {
                 .statusCode(codeStatus)
                 .extract().body().asString();
         return response;
+    }
+    //GetToken
+    private String getUserToken(){
+        PostLoginUserRequest loginUserRequest = new PostLoginUserRequest("carla@gmail.com", "Password");
+
+        Response responseLoginUser = genericPostLoginUserRequest(loginUserRequest, "users/login");
+
+        String body = responseLoginUser.getBody().asString();
+        String userToken = from(body).getString("token");
+        assertThat(userToken, notNullValue());
+
+        return userToken;
     }
 }
