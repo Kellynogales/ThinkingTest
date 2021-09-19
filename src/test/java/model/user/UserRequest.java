@@ -1,16 +1,16 @@
 package model.user;
 
-public class PostAddUserRequest {
+public class UserRequest {
 	private String firstName;
 	private String lastName;
 	private String email;
 	private String password;
 
-	public PostAddUserRequest(){
+	public UserRequest(){
 
 	}
 
-	public PostAddUserRequest(String firstName, String lastName, String email, String password) {
+	public UserRequest(String firstName, String lastName, String email, String password) {
 		this.firstName = firstName;
 		this.lastName = lastName;
 		this.email = email;
