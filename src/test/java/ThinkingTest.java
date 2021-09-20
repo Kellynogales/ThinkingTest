@@ -353,9 +353,8 @@ public class ThinkingTest extends BaseApi {
         String email = from(body).getString("[1].email");
 
         assertThat(country, equalTo("USA"));
-        assertThat(email, equalTo(" jdoe1@fake.com"));
+        assertThat(email, equalTo("jdoe1@fake.com"));
 
-        System.out.println("Email :" + email);
     }
 
 
