@@ -1,4 +1,4 @@
-//import io.qameta.allure.restassured.AllureRestAssured;
+import io.qameta.allure.restassured.AllureRestAssured;
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.filter.Filter;
@@ -28,7 +28,7 @@ public abstract class BaseApi {
         List<Filter> filters = new ArrayList<>();
         filters.add(new RequestLoggingFilter());
         filters.add(new ResponseLoggingFilter());
-//        filters.add(new AllureRestAssured());
+        filters.add(new AllureRestAssured());
 
         return new RequestSpecBuilder().setBaseUri("https://thinking-tester-contact-list.herokuapp.com")
                 .addFilters(filters)

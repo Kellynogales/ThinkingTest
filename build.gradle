@@ -1,5 +1,7 @@
 plugins {
     id 'java'
+    //*****
+    id 'io.qameta.allure' version '2.8.1'
 }
 
 group 'org.example'
@@ -21,14 +23,34 @@ dependencies {
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.12.5'
     implementation group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.14.1'
     implementation group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.14.1'
+    testImplementation group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.28'
 
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
     testRuntimeOnly 'io.rest-assured:rest-assured:4.4.0'
     testRuntimeOnly 'io.rest-assured:json-path:4.4.0'
     testRuntimeOnly 'io.rest-assured:xml-path:4.4.0'
     testRuntimeOnly 'io.rest-assured:json-schema-validator:4.4.0'
+
+    //*****
+    implementation group: 'io.qameta.allure', name: 'allure-rest-assured', version: '2.13.5'
+    implementation group: 'io.qameta.allure', name: 'allure-junit4', version: '2.13.5'
+
+    testRuntimeOnly group: 'io.qameta.allure', name: 'allure-rest-assured', version: '2.13.5'
+    testRuntimeOnly group: 'io.qameta.allure', name: 'allure-junit4', version: '2.13.5'
+
 }
 
 test {
     useJUnit()
+}
+
+allure {
+    version = "2.13.5"
+    reportDir = file("build\\allure-results")
+    //downloadLinkFormat = "https://dl.bintray.com/qameta/maven/io/qameta/allure/allure-commandline/%s/allure-commandline-%<s.zip"
+    downloadLinkFormat = "https://repo.maven.apache.org/maven2/io/qameta/allure/allure-commandline/2.13.5/allure-commandline-2.13.5.zip"
+    aspectjweaver = true
+    autoconfigure = true
+    clean = true
+
 }
