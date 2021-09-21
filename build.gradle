@@ -52,5 +52,6 @@ allure {
     aspectjweaver = true
     autoconfigure = true
     clean = true
+    configuration = "testImplementation"
 
 }
